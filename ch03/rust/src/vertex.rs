@@ -4,8 +4,6 @@ use std::sync::atomic::{Ordering, AtomicUsize};
 use crate::nalgebra_types::*; 
 
 pub trait Vertex {
-    /// Constructor 
-    fn new(dimension: usize, local_dimension: usize) -> Self; 
     /// Return the id of this vertex 
     fn id(&self) -> usize;
     /// Return the parameters 
@@ -56,9 +54,9 @@ struct CurveFittingVertex {
     pub fixed: bool, 
 }
 
-impl Vertex for CurveFittingVertex {
+impl CurveFittingVertex {
     fn new(dimension: usize, local_dimension: usize) -> Self {
-        let parameters = na::DVector::from_element(dimension, 0.0); 
+        let parameters = VecX::from_element(dimension, 0.0); 
         let local_dimension = if local_dimension > 0 {local_dimension} else {dimension};
         let id = generate_id(); 
         let ordering_id = 0; 
@@ -72,7 +70,9 @@ impl Vertex for CurveFittingVertex {
             fixed, 
         }
     }
+}
 
+impl Vertex for CurveFittingVertex {
     /// Return the id of this vertex 
     fn id(&self) -> usize {
         self.id 
@@ -115,6 +115,6 @@ impl Vertex for CurveFittingVertex {
     }
 
     fn type_info(&self) -> String {
-        "curve_fitting_vertex".to_string()
+        "CurveFittingVertex".to_string()
     } 
 }
