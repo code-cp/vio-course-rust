@@ -1,0 +1,1 @@
+- in nalgebra, quaternion argument is [w, x, y, z], but storage is [x, y, z, w], [ref](https://docs.rs/nalgebra/latest/nalgebra/geometry/struct.Quaternion.html#method.new)

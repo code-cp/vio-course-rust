@@ -1,0 +1,1 @@
+- how to use global variable in rust, [ref](https://course.rs/advance/global-variable.html)
