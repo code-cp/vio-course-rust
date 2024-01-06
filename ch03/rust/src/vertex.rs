@@ -46,7 +46,8 @@ fn generate_id() -> usize {
     next 
 }
 
-struct CurveFittingVertex {
+#[derive(Clone)]
+pub struct CurveFittingVertex {
     pub parameters: VecX, 
     pub local_dimension: usize, 
     pub id: usize, 
@@ -55,7 +56,7 @@ struct CurveFittingVertex {
 }
 
 impl CurveFittingVertex {
-    fn new(dimension: usize, local_dimension: usize) -> Self {
+    pub fn new(dimension: usize, local_dimension: usize) -> Self {
         let parameters = VecX::from_element(dimension, 0.0); 
         let local_dimension = if local_dimension > 0 {local_dimension} else {dimension};
         let id = generate_id(); 

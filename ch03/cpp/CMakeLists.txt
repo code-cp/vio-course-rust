@@ -13,6 +13,12 @@ endif ()
 
 set(CMAKE_CXX_FLAGS "-std=c++11 -g -Wall")
 
+# message(STATUS "set env var")
+# set(ENV{CC} "/usr/local/opt/llvm/bin/clang")
+# set(ENV{CXX} "/usr/local/opt/llvm/bin/clang++")
+# set(ENV{LDFLAGS} "-L/usr/local/opt/llvm/lib")
+# set(ENV{CPPFLAGS} "-I/usr/local/opt/llvm/include")
+
 FIND_PACKAGE( OpenMP REQUIRED)
 if(OPENMP_FOUND)
     message("OPENMP FOUND")

@@ -7,19 +7,22 @@ use crate::nalgebra_types::*;
 
 pub trait Edge {
     fn id(&self) -> usize; 
-    fn add_vertex(&mut self, vertex: Arc<Mutex<dyn Vertex>>); 
-    fn set_vertex(&mut self, vertices: Vec<Arc<Mutex<dyn Vertex>>>); 
-    fn get_vertex(&self, i: usize) -> Arc<Mutex<dyn Vertex>>; 
-    fn get_vertices(&self) -> Vec<Arc<Mutex<dyn Vertex>>>; 
+    fn add_vertex(&mut self, vertex: Arc<Mutex<CurveFittingVertex>>); 
+    fn set_vertex(&mut self, vertices: Vec<Arc<Mutex<CurveFittingVertex>>>); 
+    fn get_vertex(&self, i: usize) -> Arc<Mutex<CurveFittingVertex>>; 
+    fn get_vertices(&self) -> Vec<Arc<Mutex<CurveFittingVertex>>>; 
     fn num_vertices(&self) -> usize; 
     fn type_info(&self) -> String; 
     fn compute_residual(&mut self); 
     fn compute_jacobians(&mut self); 
     fn set_information(&mut self, information: MatXX); 
     fn get_information(&self) -> MatXX; 
+    fn get_jacobians(&self) -> Vec<RowVec3>;
+    fn get_residual(&self) -> VecX; 
     fn set_observation(&mut self, observation: VecX); 
     fn get_observation(&self) -> VecX; 
     fn check_valid(&self) -> bool; 
+    fn chi2(&self) -> f64;
 }
 
 // global variable ref 
@@ -44,7 +47,7 @@ pub struct CurveFittingEdge {
     pub id: usize, 
     pub ordering_id: usize, 
     pub verticies_types: Vec<String>, 
-    pub vertices: Vec<Arc<Mutex<dyn Vertex>>>, 
+    pub vertices: Vec<Arc<Mutex<CurveFittingVertex>>>, 
     pub residual: VecX, 
     pub jacobians: Vec<RowVec3>,
     pub information: MatXX, 
@@ -54,16 +57,14 @@ pub struct CurveFittingEdge {
 }
 
 impl CurveFittingEdge {
-    fn new(residual_dimension: usize, num_verticies: usize, verticies_types: Vec<String>) -> Self {
+    pub fn new(residual_dimension: usize, num_verticies: usize, verticies_types: Vec<String>, x: f64, y: f64) -> Self {
         let residual = VecX::from_element(residual_dimension, 0.0); 
         let jacobians: Vec<RowVec3> = Vec::with_capacity(num_verticies); 
         let id = generate_id(); 
         let ordering_id = 0; 
         let information = MatXX::identity(residual_dimension, residual_dimension); 
         let observation = VecX::from_element(residual_dimension, 0.0); 
-        let vertices: Vec<Arc<Mutex<dyn Vertex>>> = Vec::with_capacity(num_verticies); 
-        let x = 0.0; 
-        let y = 0.0; 
+        let vertices: Vec<Arc<Mutex<CurveFittingVertex>>> = Vec::with_capacity(num_verticies); 
 
         CurveFittingEdge {
             residual, 
@@ -85,20 +86,28 @@ impl Edge for CurveFittingEdge {
         self.id 
     }
 
-    fn add_vertex(&mut self, vertex: Arc<Mutex<dyn Vertex>>) {
+    fn add_vertex(&mut self, vertex: Arc<Mutex<CurveFittingVertex>>) {
         self.vertices.push(vertex); 
     }
 
-    fn set_vertex(&mut self, vertices: Vec<Arc<Mutex<dyn Vertex>>>) {
+    fn set_vertex(&mut self, vertices: Vec<Arc<Mutex<CurveFittingVertex>>>) {
         self.vertices = vertices; 
     }
 
-    fn get_vertex(&self, i: usize) -> Arc<Mutex<dyn Vertex>> {
+    fn get_vertex(&self, i: usize) -> Arc<Mutex<CurveFittingVertex>> {
         self.vertices[i].clone()
     }
 
-    fn get_vertices(&self) -> Vec<Arc<Mutex<dyn Vertex>>> {
+    fn get_vertices(&self) -> Vec<Arc<Mutex<CurveFittingVertex>>> {
         self.vertices.clone()
+    }
+
+    fn get_jacobians(&self) -> Vec<RowVec3> {
+        self.jacobians.clone()
+    }
+
+    fn get_residual(&self) -> VecX {
+        self.residual.clone()
     }
 
     fn num_vertices(&self) -> usize {
@@ -123,7 +132,11 @@ impl Edge for CurveFittingEdge {
             exp_y * self.x, 
             exp_y, 
         );
-        self.jacobians.push(jaco_abc); 
+        if self.jacobians.len() == 0 {
+            self.jacobians.push(jaco_abc); 
+        } else {
+            self.jacobians[0] = jaco_abc; 
+        }
     }
 
     fn set_information(&mut self, information: MatXX) {
@@ -159,5 +172,9 @@ impl Edge for CurveFittingEdge {
         }
 
         return true; 
+    }
+
+    fn chi2(&self) -> f64 {
+        (self.get_residual().transpose() * self.get_information() * self.get_residual()).into_scalar()
     }
 }
